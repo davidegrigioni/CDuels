@@ -1,4 +1,4 @@
-package cc.davyy.cduels.kits;
+package cc.davyy.cduels.model;
 
 import org.bukkit.inventory.ItemStack;
 
