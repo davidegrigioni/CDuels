@@ -2,6 +2,7 @@ package cc.davyy.cduels.managers;
 
 import cc.davyy.cduels.CDuels;
 import cc.davyy.cduels.model.Kit;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import de.leonhard.storage.sections.FlatFileSection;
 import org.bukkit.Material;
@@ -18,6 +19,7 @@ public class KitManager {
     private final CDuels instance;
     private final List<Kit> kits = new ArrayList<>();
 
+    @Inject
     public KitManager(CDuels instance) {
         this.instance = instance;
         loadKits();

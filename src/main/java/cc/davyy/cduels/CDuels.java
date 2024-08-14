@@ -25,9 +25,9 @@ public final class CDuels extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        injectGuice();
-
         registerConfig();
+
+        injectGuice();
 
         registerCommands();
     }
