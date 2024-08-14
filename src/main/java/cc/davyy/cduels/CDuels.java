@@ -1,6 +1,7 @@
 package cc.davyy.cduels;
 
 import cc.davyy.cduels.commands.KitCommand;
+import cc.davyy.cduels.managers.DatabaseManager;
 import cc.davyy.cduels.managers.KitManager;
 import cc.davyy.cduels.model.CModule;
 import com.google.inject.Guice;
@@ -22,6 +23,7 @@ public final class CDuels extends JavaPlugin {
     private Yaml config;
 
     private KitManager kitManager;
+    private DatabaseManager databaseManager;
 
     @Override
     public void onEnable() {
@@ -44,6 +46,7 @@ public final class CDuels extends JavaPlugin {
         injector.injectMembers(this);
 
         kitManager = injector.getInstance(KitManager.class);
+        databaseManager = injector.getInstance(DatabaseManager.class);
     }
 
     private void registerConfig() {

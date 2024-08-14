@@ -1,6 +1,7 @@
 package cc.davyy.cduels.model;
 
 import cc.davyy.cduels.CDuels;
+import cc.davyy.cduels.managers.DatabaseManager;
 import cc.davyy.cduels.managers.KitManager;
 import com.google.inject.AbstractModule;
 
@@ -17,6 +18,7 @@ public class CModule extends AbstractModule {
         bind(CDuels.class).toInstance(instance);
 
         bind(KitManager.class).asEagerSingleton();
+        bind(DatabaseManager.class).asEagerSingleton();
     }
 
 }

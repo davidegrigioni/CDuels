@@ -25,6 +25,7 @@ dependencies {
     implementation("com.github.simplix-softworks:SimplixStorage:3.2.7")
     implementation("dev.rollczi:litecommands-bukkit:3.4.1")
     implementation("com.google.inject:guice:7.0.0")
+    implementation("io.github.pigaut.lib.sql:SQLib:1.2")
 }
 
 def targetJavaVersion = 21
