@@ -1,7 +1,8 @@
 package cc.davyy.cduels.managers;
 
 import cc.davyy.cduels.CDuels;
-import cc.davyy.cduels.kits.Kit;
+import cc.davyy.cduels.model.Kit;
+import com.google.inject.Singleton;
 import de.leonhard.storage.sections.FlatFileSection;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+@Singleton
 public class KitManager {
 
     private final CDuels instance;
