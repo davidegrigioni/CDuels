@@ -2,7 +2,9 @@ package cc.davyy.cduels;
 
 import cc.davyy.cduels.commands.KitCommand;
 import cc.davyy.cduels.managers.DatabaseManager;
+import cc.davyy.cduels.managers.DuelManager;
 import cc.davyy.cduels.managers.KitManager;
+import cc.davyy.cduels.managers.WorldCreatorManager;
 import cc.davyy.cduels.model.CModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -24,6 +26,8 @@ public final class CDuels extends JavaPlugin {
 
     private KitManager kitManager;
     private DatabaseManager databaseManager;
+    private WorldCreatorManager worldCreatorManager;
+    private DuelManager duelManager;
 
     @Override
     public void onEnable() {
@@ -47,6 +51,8 @@ public final class CDuels extends JavaPlugin {
 
         kitManager = injector.getInstance(KitManager.class);
         databaseManager = injector.getInstance(DatabaseManager.class);
+        worldCreatorManager = injector.getInstance(WorldCreatorManager.class);
+        duelManager = injector.getInstance(DuelManager.class);
     }
 
     private void registerConfig() {
