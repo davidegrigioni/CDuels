@@ -4,7 +4,9 @@ import cc.davyy.cduels.CDuels;
 import cc.davyy.cduels.kits.Kit;
 import de.leonhard.storage.sections.FlatFileSection;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,7 @@ public class KitManager {
 
     public KitManager(CDuels instance) {
         this.instance = instance;
+        loadKits();
     }
 
     public void loadKits() {
@@ -40,6 +43,32 @@ public class KitManager {
 
             kits.add(new Kit(kitName, items, permission));
         }
+    }
+
+    public void assignKit(@NotNull Player player, @NotNull String kitName) {
+        Kit kit = getKitByName(kitName);
+
+        if (kit != null) {
+            if (player.hasPermission(kit.permission())) {
+                player.getInventory().clear();
+
+                kit.items().forEach(item -> player.getInventory().addItem(item));
+
+                player.sendMessage("You have received the " + kit.name() + " kit!");
+            } else {
+                player.sendMessage("You do not have permission to use this kit!");
+            }
+        } else {
+            player.sendMessage("Kit not found!");
+        }
+    }
+
+    public Kit getKitByName(String name) {
+        return kits
+                .stream()
+                .filter(kit -> kit.name().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
     }
 
     public List<Kit> getKits() { return kits; }
