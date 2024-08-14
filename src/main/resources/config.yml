@@ -1,0 +1,13 @@
+kits:
+  swordsman:
+    permission: "duel.kit.swordsman"
+    items:
+      - DIAMOND_SWORD
+      - IRON_HELMET
+      - IRON_CHESTPLATE
+  archer:
+    permission: "duel.kit.archer"
+    items:
+      - BOW
+      - ARROW:64
+      - LEATHER_HELMET
