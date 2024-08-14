@@ -2,6 +2,9 @@ package cc.davyy.cduels;
 
 import cc.davyy.cduels.commands.KitCommand;
 import cc.davyy.cduels.managers.KitManager;
+import cc.davyy.cduels.model.CModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import de.leonhard.storage.SimplixBuilder;
 import de.leonhard.storage.Yaml;
 import dev.rollczi.litecommands.LiteCommands;
@@ -22,9 +25,10 @@ public final class CDuels extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        kitManager = new KitManager(this);
+        injectGuice();
 
         registerConfig();
+
         registerCommands();
     }
 
@@ -33,6 +37,13 @@ public final class CDuels extends JavaPlugin {
         if (liteCommands != null) {
             liteCommands.unregister();
         }
+    }
+
+    private void injectGuice() {
+        Injector injector = Guice.createInjector(new CModule(this));
+        injector.injectMembers(this);
+
+        kitManager = injector.getInstance(KitManager.class);
     }
 
     private void registerConfig() {
