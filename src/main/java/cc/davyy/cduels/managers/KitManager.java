@@ -4,7 +4,6 @@ import cc.davyy.cduels.CDuels;
 import cc.davyy.cduels.model.Kit;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import de.leonhard.storage.sections.FlatFileSection;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -12,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Singleton
 public class KitManager {
@@ -26,53 +27,52 @@ public class KitManager {
     }
 
     public void loadKits() {
-        FlatFileSection kitSection = instance.getConfiguration().getSection("kits");
+        Set<String> kitSection = instance.getConfiguration().singleLayerKeySet("kits");
 
-        for (String kitName : kitSection.keySet()) {
+        kitSection.forEach(kitName -> {
             String permission = instance.getConfiguration().getString("kits." + kitName + ".permission");
             List<ItemStack> items = new ArrayList<>();
             List<String> itemList = instance.getConfiguration().getStringList("kits." + kitName + ".items");
 
-            for (String itemString : itemList) {
+            itemList.forEach(itemString -> {
                 String[] itemData = itemString.split(":");
                 Material material = Material.getMaterial(itemData[0]);
 
                 if (material != null) {
                     int amount = itemData.length > 1 ? Integer.parseInt(itemData[1]) : 1;
-                    items.add(new ItemStack(material, amount));
+                    items.add(ItemStack.of(material, amount));
                 } else {
                     instance.getLogger().warning("Invalid material: " + itemData[0] + " in kit " + kitName);
                 }
-            }
+            });
 
-            kits.add(new Kit(kitName, items, permission));
-        }
+            kits.add(Kit.of(kitName, items, permission));
+        });
+
     }
 
     public void assignKit(@NotNull Player player, @NotNull String kitName) {
-        Kit kit = getKitByName(kitName);
+        Optional<Kit> kitOptional = getKitByName(kitName);
 
-        if (kit != null) {
-            if (player.hasPermission(kit.permission())) {
-                player.getInventory().clear();
+        kitOptional.ifPresentOrElse(
+                kit -> {
+                    if (!player.hasPermission(kit.permission())) {
+                        player.sendMessage("You do not have permission to use this kit!");
+                        return;
+                    }
 
-                kit.items().forEach(item -> player.getInventory().addItem(item));
-
-                player.sendMessage("You have received the " + kit.name() + " kit!");
-            } else {
-                player.sendMessage("You do not have permission to use this kit!");
-            }
-        } else {
-            player.sendMessage("Kit not found!");
-        }
+                    player.getInventory().clear();
+                    kit.items().forEach(item -> player.getInventory().addItem(item));
+                    player.sendMessage("You have received the " + kit.name() + " kit!");
+                },
+                () -> player.sendMessage("Kit not found!")
+        );
     }
 
-    public Kit getKitByName(String name) {
-        return kits
-                .stream()
+    public Optional<Kit> getKitByName(@NotNull String name) {
+        return kits.stream()
                 .filter(kit -> kit.name().equalsIgnoreCase(name))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     public List<Kit> getKits() { return kits; }
