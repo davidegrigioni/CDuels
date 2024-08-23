@@ -1,19 +1,32 @@
 package cc.davyy.cduels.managers;
 
 import com.google.inject.Singleton;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.Arrays;
 
 @Singleton
 public class WorldCreatorManager {
 
-    public World createDuelWorld(String worldName) {
-        WorldCreator creator = new WorldCreator(worldName);
-        creator.environment(World.Environment.NORMAL);
-        creator.type(WorldType.FLAT);
-        creator.generateStructures(false);
+    private final ComponentLogger componentLogger = ComponentLogger.logger(WorldCreatorManager.class);
+
+    /**
+     * Creates a new world for duels with specific properties.
+     *
+     * @param worldName The name of the world to create.
+     * @return The created {@link World} instance, or {@code null} if world creation failed.
+     */
+    public World createDuelWorld(@NotNull String worldName) {
+        WorldCreator creator = new WorldCreator(worldName)
+                .environment(World.Environment.NORMAL)
+                .type(WorldType.FLAT)
+                .generateStructures(false);
+
         World world = creator.createWorld();
 
         if (world != null) {
@@ -23,7 +36,12 @@ public class WorldCreatorManager {
         return world;
     }
 
-    private void setupWorldProperties(World world) {
+    /**
+     * Sets up properties for the duel world.
+     *
+     * @param world The world to configure.
+     */
+    private void setupWorldProperties(@NotNull World world) {
         world.setPVP(true);
         world.setAutoSave(false);
         world.setTime(6000);
@@ -35,34 +53,69 @@ public class WorldCreatorManager {
         border.setSize(500);
     }
 
-    public void deleteWorld(String worldName) {
+    /**
+     * Deletes a world by name.
+     *
+     * @param worldName The name of the world to delete.
+     */
+    public void deleteWorld(@NotNull String worldName) {
         World world = Bukkit.getWorld(worldName);
-        if (world != null) {
-            Bukkit.unloadWorld(world, false);
-            deleteWorldFiles(worldName);
+
+        if (world == null) {
+            componentLogger.error("World '{}' not found and cannot be deleted.", worldName);
+            return;
         }
+
+        Bukkit.unloadWorld(world, false);
+        deleteWorldFiles(worldName);
     }
 
-    private void deleteWorldFiles(String worldName) {
+    /**
+     * Deletes the files associated with a world.
+     *
+     * @param worldName The name of the world whose files should be deleted.
+     */
+    private void deleteWorldFiles(@NotNull String worldName) {
         File worldFolder = new File(Bukkit.getWorldContainer(), worldName);
-        if (worldFolder.exists()) {
-            try {
-                deleteFolder(worldFolder);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+
+        if (!worldFolder.exists()) {
+            componentLogger.error("World folder for '{}' does not exist.", worldName);
+            return;
+        }
+
+        try {
+            deleteFolder(worldFolder);
+        } catch (IOException ex) {
+            componentLogger.error("Failed to delete world files for '{}': {}", worldName, ex.getMessage());
         }
     }
 
-    private void deleteFolder(File folder) throws IOException {
-        for (File file : folder.listFiles()) {
-            if (file.isDirectory()) {
-                deleteFolder(file);
-            } else {
-                file.delete();
-            }
+    /**
+     * Recursively deletes a folder and its contents.
+     *
+     * @param folder The folder to delete.
+     * @throws IOException If an I/O error occurs while deleting files or directories.
+     */
+    private void deleteFolder(@NotNull File folder) throws IOException {
+        File[] files = folder.listFiles();
+
+        if (files != null) {
+            Arrays.stream(files).forEach(file -> {
+                try {
+                    if (file.isDirectory()) {
+                        deleteFolder(file);
+                    } else if (!file.delete()) {
+                        throw new IOException("Failed to delete file: " + file.getAbsolutePath());
+                    }
+                } catch (IOException ex) {
+                    throw new UncheckedIOException(ex);
+                }
+            });
         }
-        folder.delete();
+
+        if (!folder.delete()) {
+            throw new IOException("Failed to delete folder: " + folder.getAbsolutePath());
+        }
     }
 
 }
