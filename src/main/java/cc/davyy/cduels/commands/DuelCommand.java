@@ -1,7 +1,9 @@
 package cc.davyy.cduels.commands;
 
 import cc.davyy.cduels.CDuels;
+import cc.davyy.cduels.managers.DatabaseManager;
 import cc.davyy.cduels.managers.DuelManager;
+import cc.davyy.cduels.model.PlayerStats;
 import com.google.inject.Inject;
 import dev.rollczi.litecommands.annotations.argument.Arg;
 import dev.rollczi.litecommands.annotations.command.Command;
@@ -9,16 +11,20 @@ import dev.rollczi.litecommands.annotations.context.Context;
 import dev.rollczi.litecommands.annotations.execute.Execute;
 import org.bukkit.entity.Player;
 
+import java.util.List;
+
 @Command(name = "duel")
 public class DuelCommand {
 
     private final CDuels instance;
     private final DuelManager duelManager;
+    private final DatabaseManager databaseManager;
 
     @Inject
-    public DuelCommand(CDuels instance, DuelManager duelManager) {
+    public DuelCommand(CDuels instance, DuelManager duelManager, DatabaseManager databaseManager) {
         this.instance = instance;
         this.duelManager = duelManager;
+        this.databaseManager = databaseManager;
     }
 
     @Execute(name = "invite")
@@ -58,6 +64,13 @@ public class DuelCommand {
 
         player.sendMessage("You have accepted the duel challenge from " + challenger.getName() + "!");
         challenger.sendMessage(player.getName() + " has accepted your duel challenge!");
+    }
+
+    @Execute(name = "top")
+    void top(@Context Player player, @Arg int limit) {
+        List<PlayerStats> leaderboard = databaseManager.getLeaderboard(limit);
+        player.sendMessage("Top Duelists:");
+        leaderboard.forEach(stats -> player.sendMessage(stats.uuid() + ": Wins=" + stats.duelWon() + " Losses=" + stats.duelLost()));
     }
 
 }

@@ -9,6 +9,8 @@ import io.github.pigaut.lib.sql.Database;
 import io.github.pigaut.lib.sql.SQLib;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,6 +42,21 @@ public class DatabaseManager {
                 .withParameter(duelWon)
                 .withParameter(duelLost)
                 .executeUpdate();
+    }
+
+    public List<PlayerStats> getLeaderboard(int limit) {
+        List<PlayerStats> statsList = new ArrayList<>();
+        table.select("ORDER BY duels_won DESC LIMIT ?")
+                .withParameter(limit)
+                .executeQuery(resultSet -> {
+                    while (resultSet.next()) {
+                        UUID uuid = UUID.fromString(resultSet.getString("uuid"));
+                        int duelsWon = resultSet.getInt("duels_won");
+                        int duelsLost = resultSet.getInt("duels_lost");
+                        statsList.add(new PlayerStats(uuid, duelsWon, duelsLost));
+                    }
+                });
+        return statsList;
     }
 
     public PlayerStats getPlayerStats(@NotNull UUID uuid) {

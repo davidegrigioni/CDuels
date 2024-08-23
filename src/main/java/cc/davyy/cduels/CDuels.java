@@ -55,7 +55,7 @@ public class CDuels extends JavaPlugin {
     private void registerCommands() {
         this.liteCommands = LiteBukkitFactory.builder("cduels", this)
                 .commands(LiteCommandsAnnotations.of(
-                        new DuelCommand(this, duelManager),
+                        new DuelCommand(this, duelManager, databaseManager),
                         new KitCommand(kitManager)
                 ))
                 .build();
