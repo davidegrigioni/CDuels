@@ -10,6 +10,7 @@ import io.github.pigaut.lib.sql.SQLib;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Singleton
@@ -23,6 +24,14 @@ public class DatabaseManager {
         this.table = database.tableOf("player_stats");
 
         instance.getServer().getScheduler().runTaskAsynchronously(instance, this::createTable);
+    }
+
+    public void addPlayer(@NotNull UUID uuid) {
+        if (!playerExists(uuid)) {
+            table.insertInto("uuid")
+                    .withParameter(uuid.toString())
+                    .executeUpdate();
+        }
     }
 
     public void updateStats(@NotNull UUID uuid, int duelWon, int duelLost) {
@@ -56,6 +65,14 @@ public class DatabaseManager {
                 duels_won INT DEFAULT 0,
                 duels_lost INT DEFAULT 0
             """);
+    }
+
+    private boolean playerExists(@NotNull UUID uuid) {
+        AtomicBoolean exists = new AtomicBoolean(false);
+        table.select("WHERE uuid = ?")
+                .withParameter(uuid.toString())
+                .executeQuery(resultSet -> exists.set(resultSet.next()));
+        return exists.get();
     }
 
 }
