@@ -9,21 +9,17 @@ import cc.davyy.cduels.managers.WorldCreatorManager;
 import cc.davyy.cduels.module.CModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import de.leonhard.storage.SimplixBuilder;
-import de.leonhard.storage.Yaml;
 import dev.rollczi.litecommands.LiteCommands;
 import dev.rollczi.litecommands.annotations.LiteCommandsAnnotations;
 import dev.rollczi.litecommands.bukkit.LiteBukkitFactory;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import static cc.davyy.cduels.utils.ConfigUtils.registerConfig;
 
 public class CDuels extends JavaPlugin {
 
     private LiteCommands<CommandSender> liteCommands;
-    private Yaml config;
 
     private KitManager kitManager;
     private DatabaseManager databaseManager;
@@ -32,7 +28,7 @@ public class CDuels extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        registerConfig();
+        registerConfig(this);
 
         injectGuice();
 
@@ -41,8 +37,8 @@ public class CDuels extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (liteCommands != null) {
-            liteCommands.unregister();
+        if (this.liteCommands != null) {
+            this.liteCommands.unregister();
         }
     }
 
@@ -56,13 +52,6 @@ public class CDuels extends JavaPlugin {
         duelManager = injector.getInstance(DuelManager.class);
     }
 
-    private void registerConfig() {
-        config = SimplixBuilder.fromFile(
-                new File(getDataFolder(), "config.yml"))
-                .addInputStreamFromResource("config.yml")
-                .createYaml();
-    }
-
     private void registerCommands() {
         liteCommands = LiteBukkitFactory.builder("cduels", this)
                 .commands(LiteCommandsAnnotations.of(
@@ -71,8 +60,5 @@ public class CDuels extends JavaPlugin {
                 ))
                 .build();
     }
-
-    @NotNull
-    public Yaml getConfiguration() { return config; }
 
 }
