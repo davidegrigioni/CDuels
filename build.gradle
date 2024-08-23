@@ -26,6 +26,14 @@ dependencies {
     implementation("dev.rollczi:litecommands-bukkit:3.4.1")
     implementation("com.google.inject:guice:7.0.0")
     implementation("io.github.pigaut.lib.sql:SQLib:1.2")
+
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.11.0")
+    testImplementation("com.github.seeseemelk:MockBukkit-v1.21:3.108.0")
+    testImplementation("org.mockito:mockito-core:5.12.0")
+}
+
+test {
+    useJUnitPlatform()
 }
 
 def targetJavaVersion = 21
