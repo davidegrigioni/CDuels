@@ -2,16 +2,19 @@ package cc.davyy.cduels.managers;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Singleton
 public class DuelManager {
+
+    private final Map<UUID, UUID> duelRequests = new HashMap<>();
 
     private final WorldCreatorManager worldCreatorManager;
 
@@ -25,11 +28,11 @@ public class DuelManager {
         World duelWorld = worldCreatorManager.createDuelWorld(worldName);
 
         if (duelWorld != null) {
-            Location player1Spawn = new Location(duelWorld, 100, 70, 100);
-            Location player2Spawn = new Location(duelWorld, -100, 70, -100);
+            Location player1Spawn = new Location(duelWorld, 100, 1, 100);
+            Location player2Spawn = new Location(duelWorld, -100, 1, -100);
 
-            player1.teleportAsync(player1Spawn);
-            player2.teleportAsync(player2Spawn);
+            player1.teleport(player1Spawn);
+            player2.teleport(player2Spawn);
 
             player1.sendMessage("Duel started! You have been teleported to the duel world.");
             player2.sendMessage("Duel started! You have been teleported to the duel world.");
@@ -39,18 +42,14 @@ public class DuelManager {
         }
     }
 
-    public void endDuel(@NotNull String worldName, @NotNull Player player1, @NotNull Player player2) {
-        World mainWorld = Bukkit.getWorld("world");
-
-        if (mainWorld != null) {
-            player1.teleportAsync(mainWorld.getSpawnLocation());
-            player2.teleportAsync(mainWorld.getSpawnLocation());
-        }
-
-        worldCreatorManager.deleteWorld(worldName);
-
-        player1.sendMessage("The duel has ended. You have been teleported back.");
-        player2.sendMessage("The duel has ended. You have been teleported back.");
+    public void sendDuelRequest(@NotNull UUID challenger, @NotNull UUID challenged) {
+        duelRequests.put(challenged, challenger);
     }
+
+    public boolean hasDuelRequest(@NotNull UUID challenged) { return duelRequests.containsKey(challenged); }
+
+    public UUID getChallenger(@NotNull UUID challenged) { return duelRequests.get(challenged); }
+
+    public void removeDuelRequest(UUID challenged) { duelRequests.remove(challenged); }
 
 }
