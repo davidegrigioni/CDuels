@@ -1,20 +1,27 @@
 package cc.davyy.cduels.managers;
 
+import cc.davyy.cduels.utils.Messages;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import static cc.davyy.cduels.utils.ColorUtils.colorize;
+import static cc.davyy.cduels.utils.ConfigUtils.getMessage;
+
 @Singleton
 public class DuelManager {
 
     private final Map<UUID, UUID> duelRequests = new HashMap<>();
+    private final Map<UUID, Location> playerOriginalLocations = new HashMap<>();
+    private final Map<UUID, ItemStack[]> playerOriginalInventories = new HashMap<>();
 
     private final WorldCreatorManager worldCreatorManager;
 
@@ -23,33 +30,111 @@ public class DuelManager {
         this.worldCreatorManager = worldCreatorManager;
     }
 
+    /**
+     * Starts a duel between two players by creating a duel world and teleporting them.
+     *
+     * @param player1 The first player.
+     * @param player2 The second player.
+     */
     public void startDuel(@NotNull Player player1, @NotNull Player player2) {
         String worldName = "duel_" + UUID.randomUUID().toString().substring(0, 8);
+
         World duelWorld = worldCreatorManager.createDuelWorld(worldName);
 
-        if (duelWorld != null) {
-            Location player1Spawn = new Location(duelWorld, 100, 1, 100);
-            Location player2Spawn = new Location(duelWorld, -100, 1, -100);
+        if (duelWorld == null) {
+            String dwFailed = getMessage(Messages.DUEL_WORLD_CREATION_FAILED);
+            player1.sendMessage(colorize(dwFailed));
+            player2.sendMessage(colorize(dwFailed));
+            return;
+        }
 
-            player1.teleport(player1Spawn);
-            player2.teleport(player2Spawn);
+        playerOriginalLocations.put(player1.getUniqueId(), player1.getLocation());
+        playerOriginalLocations.put(player2.getUniqueId(), player2.getLocation());
 
-            player1.sendMessage("Duel started! You have been teleported to the duel world.");
-            player2.sendMessage("Duel started! You have been teleported to the duel world.");
-        } else {
-            player1.sendMessage("Failed to create the duel world.");
-            player2.sendMessage("Failed to create the duel world.");
+        playerOriginalInventories.put(player1.getUniqueId(), player1.getInventory().getContents());
+        playerOriginalInventories.put(player2.getUniqueId(), player2.getInventory().getContents());
+
+        player1.getInventory().clear();
+        player2.getInventory().clear();
+
+        Location player1Spawn = new Location(duelWorld, 100, 1, 100);
+        Location player2Spawn = new Location(duelWorld, -100, 1, -100);
+
+        player1.teleportAsync(player1Spawn);
+        player2.teleportAsync(player2Spawn);
+
+        String duelStarted = getMessage(Messages.DUEL_STARTED);
+        player1.sendMessage(colorize(duelStarted));
+        player2.sendMessage(colorize(duelStarted));
+    }
+
+    /**
+     * Ends a duel by teleporting players back to their original locations, restoring inventories, and deleting the duel world.
+     *
+     * @param player1 The first player.
+     * @param player2 The second player.
+     */
+    public void endDuel(@NotNull Player player1, @NotNull Player player2) {
+        Location player1OriginalLocation = playerOriginalLocations.remove(player1.getUniqueId());
+        Location player2OriginalLocation = playerOriginalLocations.remove(player2.getUniqueId());
+
+        if (player1OriginalLocation != null && player2OriginalLocation != null) {
+            String duelEnd = getMessage(Messages.DUEL_ENDED);
+
+            player1.teleportAsync(player1OriginalLocation);
+            player1.sendMessage(colorize(duelEnd));
+
+            player2.teleportAsync(player2OriginalLocation);
+            player2.sendMessage(colorize(duelEnd));
+        }
+
+        ItemStack[] player1OriginalInventory = playerOriginalInventories.remove(player1.getUniqueId());
+        ItemStack[] player2OriginalInventory = playerOriginalInventories.remove(player2.getUniqueId());
+
+        if (player1OriginalInventory != null && player2OriginalInventory != null) {
+            player1.getInventory().setContents(player1OriginalInventory);
+
+            player2.getInventory().setContents(player2OriginalInventory);
         }
     }
 
+    /**
+     * Sends a duel request from one player to another.
+     *
+     * @param challenger The player who is challenging.
+     * @param challenged The player being challenged.
+     */
     public void sendDuelRequest(@NotNull UUID challenger, @NotNull UUID challenged) {
         duelRequests.put(challenged, challenger);
     }
 
-    public boolean hasDuelRequest(@NotNull UUID challenged) { return duelRequests.containsKey(challenged); }
+    /**
+     * Checks if there is a duel request for a given player.
+     *
+     * @param challenged The player being checked.
+     * @return {@code true} if a request exists, {@code false} otherwise.
+     */
+    public boolean hasDuelRequest(@NotNull UUID challenged) {
+        return duelRequests.containsKey(challenged);
+    }
 
-    public UUID getChallenger(@NotNull UUID challenged) { return duelRequests.get(challenged); }
+    /**
+     * Gets the UUID of the player who challenged the given player.
+     *
+     * @param challenged The player being checked.
+     * @return The UUID of the challenger, or {@code null} if no request exists.
+     */
+    public UUID getChallenger(@NotNull UUID challenged) {
+        return duelRequests.get(challenged);
+    }
 
-    public void removeDuelRequest(UUID challenged) { duelRequests.remove(challenged); }
+    /**
+     * Removes a duel request for a given player.
+     *
+     * @param challenged The player whose request should be removed.
+     */
+    public void removeDuelRequest(UUID challenged) {
+        duelRequests.remove(challenged);
+    }
 
 }

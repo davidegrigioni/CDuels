@@ -55,6 +55,7 @@ public class DuelCommand {
         duelManager.startDuel(challenger, player);
 
         duelManager.removeDuelRequest(player.getUniqueId());
+
         player.sendMessage("You have accepted the duel challenge from " + challenger.getName() + "!");
         challenger.sendMessage(player.getName() + " has accepted your duel challenge!");
     }
