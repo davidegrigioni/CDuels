@@ -11,3 +11,8 @@ kits:
       - BOW
       - ARROW:64
       - LEATHER_HELMET
+rewards:
+  duel_winner:
+    items:
+      - "DIAMOND 1"
+      - "GOLD_INGOT 5"
