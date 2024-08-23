@@ -1,0 +1,6 @@
+messages:
+  duel-started: "<green>Duel started! You have been teleported to the duel world.</green>"
+  duel-end: "<green>Duel ended! You have been teleported back to your original location.</green>"
+  dw-creation-failed: "<red>Failed to create the duel world.</red>"
+  no-permission: "<red>You do not have permission to use this kit!</red>"
+  kit-not-found: "<red>Kit not found!</red>"

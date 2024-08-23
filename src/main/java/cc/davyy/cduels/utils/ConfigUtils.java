@@ -9,6 +9,7 @@ import java.io.File;
 public final class ConfigUtils {
 
     private static Yaml config;
+    private static Yaml messages;
 
     private ConfigUtils() {}
 
@@ -17,8 +18,14 @@ public final class ConfigUtils {
                         new File(instance.getDataFolder(), "config.yml"))
                 .addInputStreamFromResource("config.yml")
                 .createYaml();
+        messages = SimplixBuilder.fromFile(
+                new File(instance.getDataFolder(), "messages.yml"))
+                .addInputStreamFromResource("messages.yml")
+                .createYaml();
     }
 
     public static Yaml getConfig() { return config; }
+
+    public static String getMessage(Messages path) { return messages.getString(path.getMessage()); }
 
 }
