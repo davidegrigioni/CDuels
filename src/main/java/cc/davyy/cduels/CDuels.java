@@ -1,11 +1,12 @@
 package cc.davyy.cduels;
 
+import cc.davyy.cduels.commands.DuelCommand;
 import cc.davyy.cduels.commands.KitCommand;
 import cc.davyy.cduels.managers.DatabaseManager;
 import cc.davyy.cduels.managers.DuelManager;
 import cc.davyy.cduels.managers.KitManager;
 import cc.davyy.cduels.managers.WorldCreatorManager;
-import cc.davyy.cduels.model.CModule;
+import cc.davyy.cduels.module.CModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import de.leonhard.storage.SimplixBuilder;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public final class CDuels extends JavaPlugin {
+public class CDuels extends JavaPlugin {
 
     private LiteCommands<CommandSender> liteCommands;
     private Yaml config;
@@ -65,6 +66,7 @@ public final class CDuels extends JavaPlugin {
     private void registerCommands() {
         liteCommands = LiteBukkitFactory.builder("cduels", this)
                 .commands(LiteCommandsAnnotations.of(
+                        new DuelCommand(this, duelManager),
                         new KitCommand(kitManager)
                 ))
                 .build();
