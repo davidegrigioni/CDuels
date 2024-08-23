@@ -18,13 +18,13 @@ public class CModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(CDuels.class).toInstance(instance);
+        this.bind(CDuels.class).toInstance(instance);
 
-        bind(KitManager.class).asEagerSingleton();
-        bind(DatabaseManager.class).asEagerSingleton();
+        this.bind(KitManager.class).asEagerSingleton();
+        this.bind(DatabaseManager.class).asEagerSingleton();
 
-        bind(WorldCreatorManager.class).in(Singleton.class);
-        bind(DuelManager.class).in(Singleton.class);
+        this.bind(WorldCreatorManager.class).in(Singleton.class);
+        this.bind(DuelManager.class).in(Singleton.class);
     }
 
 }
