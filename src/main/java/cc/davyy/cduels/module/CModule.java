@@ -1,4 +1,4 @@
-package cc.davyy.cduels.model;
+package cc.davyy.cduels.module;
 
 import cc.davyy.cduels.CDuels;
 import cc.davyy.cduels.managers.DatabaseManager;
