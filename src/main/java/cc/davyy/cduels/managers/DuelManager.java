@@ -54,8 +54,8 @@ public class DuelManager {
         savePlayerState(player1);
         savePlayerState(player2);
 
-        clearPlayerInventory(player1);
-        clearPlayerInventory(player2);
+        player1.getInventory().clear();
+        player2.getInventory().clear();
 
         teleportToDuelWorld(player1, duelWorld, 100, 100);
         teleportToDuelWorld(player2, duelWorld, -100, -100);
@@ -88,9 +88,7 @@ public class DuelManager {
      * @param challenger The player who is challenging.
      * @param challenged The player being challenged.
      */
-    public void sendDuelRequest(@NotNull UUID challenger, @NotNull UUID challenged) {
-        duelRequests.put(challenged, challenger);
-    }
+    public void sendDuelRequest(@NotNull UUID challenger, @NotNull UUID challenged) { duelRequests.put(challenged, challenger); }
 
     /**
      * Checks if there is a duel request for a given player.
@@ -148,10 +146,6 @@ public class DuelManager {
     private void savePlayerState(@NotNull Player player) {
         playerOriginalLocations.put(player.getUniqueId(), player.getLocation());
         playerOriginalInventories.put(player.getUniqueId(), player.getInventory().getContents());
-    }
-
-    private void clearPlayerInventory(@NotNull Player player) {
-        player.getInventory().clear();
     }
 
     private void teleportToDuelWorld(@NotNull Player player, @NotNull World duelWorld, double x, double z) {
