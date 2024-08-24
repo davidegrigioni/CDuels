@@ -2,6 +2,8 @@ package cc.davyy.cduels;
 
 import cc.davyy.cduels.commands.DuelCommand;
 import cc.davyy.cduels.commands.KitCommand;
+import cc.davyy.cduels.listeners.DeathListener;
+import cc.davyy.cduels.listeners.PlayerJoinListener;
 import cc.davyy.cduels.managers.*;
 import cc.davyy.cduels.module.CModule;
 import com.google.inject.Guice;
@@ -10,6 +12,8 @@ import dev.rollczi.litecommands.LiteCommands;
 import dev.rollczi.litecommands.annotations.LiteCommandsAnnotations;
 import dev.rollczi.litecommands.bukkit.LiteBukkitFactory;
 import org.bukkit.command.CommandSender;
+import org.bukkit.event.Listener;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import static cc.davyy.cduels.utils.ConfigUtils.registerConfig;
@@ -20,9 +24,7 @@ public class CDuels extends JavaPlugin {
 
     private KitManager kitManager;
     private DatabaseManager databaseManager;
-    private WorldCreatorManager worldCreatorManager;
     private DuelManager duelManager;
-    private RewardManager rewardManager;
 
     @Override
     public void onEnable() {
@@ -30,6 +32,8 @@ public class CDuels extends JavaPlugin {
 
         injectGuice();
 
+        registerListeners(new PlayerJoinListener(databaseManager),
+                new DeathListener(duelManager));
         registerCommands();
     }
 
@@ -46,9 +50,7 @@ public class CDuels extends JavaPlugin {
 
         kitManager = injector.getInstance(KitManager.class);
         databaseManager = injector.getInstance(DatabaseManager.class);
-        worldCreatorManager = injector.getInstance(WorldCreatorManager.class);
         duelManager = injector.getInstance(DuelManager.class);
-        rewardManager = injector.getInstance(RewardManager.class);
     }
 
     private void registerCommands() {
@@ -58,6 +60,14 @@ public class CDuels extends JavaPlugin {
                         new KitCommand(kitManager)
                 ))
                 .build();
+    }
+
+    private void registerListeners(Listener... listeners) {
+        PluginManager pm = this.getServer().getPluginManager();
+
+        for (Listener listener : listeners) {
+            pm.registerEvents(listener, this);
+        }
     }
 
 }
