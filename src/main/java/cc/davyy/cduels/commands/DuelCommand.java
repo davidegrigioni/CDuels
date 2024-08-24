@@ -22,13 +22,11 @@ public class DuelCommand {
 
     private final CDuels instance;
     private final DuelManager duelManager;
-    private final DatabaseManager databaseManager;
 
     @Inject
-    public DuelCommand(CDuels instance, DuelManager duelManager, DatabaseManager databaseManager) {
+    public DuelCommand(CDuels instance, DuelManager duelManager) {
         this.instance = instance;
         this.duelManager = duelManager;
-        this.databaseManager = databaseManager;
     }
 
     @Execute(name = "invite")
@@ -82,7 +80,7 @@ public class DuelCommand {
 
     @Execute(name = "top")
     void top(@Context Player player) {
-        List<PlayerStats> leaderboard = databaseManager.getLeaderboard(10);
+        List<PlayerStats> leaderboard = duelManager.getLeaderBoard(10);
         player.sendMessage("Top Duelists:");
         leaderboard.forEach(stats -> player.sendMessage(stats.uuid() + ": Wins=" + stats.duelWon() + " Losses=" + stats.duelLost()));
     }

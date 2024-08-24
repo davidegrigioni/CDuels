@@ -32,7 +32,8 @@ public class CDuels extends JavaPlugin {
 
         injectGuice();
 
-        registerListeners(new PlayerJoinListener(databaseManager),
+        registerListeners(
+                new PlayerJoinListener(databaseManager),
                 new DeathListener(duelManager));
         registerCommands();
     }
@@ -56,7 +57,7 @@ public class CDuels extends JavaPlugin {
     private void registerCommands() {
         this.liteCommands = LiteBukkitFactory.builder("cduels", this)
                 .commands(LiteCommandsAnnotations.of(
-                        new DuelCommand(this, duelManager, databaseManager),
+                        new DuelCommand(this, duelManager),
                         new KitCommand(kitManager)
                 ))
                 .build();

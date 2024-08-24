@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -119,6 +120,8 @@ public class DuelManager {
     public void removeDuelRequest(@NotNull UUID challenged) {
         duelRequests.remove(challenged);
     }
+
+    public List<PlayerStats> getLeaderBoard(int limit) { return databaseManager.getLeaderboard(limit); }
 
     private void restorePlayerState(@NotNull Player player) {
         player.teleportAsync(playerOriginalLocations.get(player.getUniqueId()));
