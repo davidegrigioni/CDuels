@@ -4,6 +4,7 @@ import cc.davyy.cduels.CDuels;
 import cc.davyy.cduels.managers.DatabaseManager;
 import cc.davyy.cduels.managers.DuelManager;
 import cc.davyy.cduels.model.PlayerStats;
+import cc.davyy.cduels.utils.Messages;
 import com.google.inject.Inject;
 import dev.rollczi.litecommands.annotations.argument.Arg;
 import dev.rollczi.litecommands.annotations.command.Command;
@@ -12,6 +13,9 @@ import dev.rollczi.litecommands.annotations.execute.Execute;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+
+import static cc.davyy.cduels.utils.ConfigUtils.getMessage;
+import static cc.davyy.cduels.utils.TxtUtils.of;
 
 @Command(name = "duel")
 public class DuelCommand {
@@ -30,18 +34,28 @@ public class DuelCommand {
     @Execute(name = "invite")
     void inviteDuel(@Context Player player, @Arg Player target) {
         if (!target.isOnline()) {
-            player.sendMessage("The specified player is not online.");
+            String playerNotOnline = getMessage(Messages.PLAYER_NOT_ONLINE);
+            player.sendMessage(of(playerNotOnline)
+                    .build());
             return;
         }
 
         if (player.equals(target)) {
-            player.sendMessage("You cannot duel yourself.");
+            String duelYourself = getMessage(Messages.DUEL_YOURSELF);
+            player.sendMessage(of(duelYourself)
+                    .build());
             return;
         }
 
         duelManager.sendDuelRequest(player.getUniqueId(), target.getUniqueId());
-        player.sendMessage("You have invited " + target.getName() + " to a duel.");
-        target.sendMessage(player.getName() + " has invited you to a duel! Use /duel accept to accept.");
+        String duelInviteSend = getMessage(Messages.DUEL_INVITE_SEND);
+        String duelReceived = getMessage(Messages.DUEL_INVITE_RECEIVED);
+        player.sendMessage(of(duelInviteSend)
+                .placeholder("target", target.getName())
+                .build());
+        target.sendMessage(of(duelReceived)
+                .placeholder("player", player.getName())
+                .build());
     }
 
     @Execute(name = "accept")
@@ -67,8 +81,8 @@ public class DuelCommand {
     }
 
     @Execute(name = "top")
-    void top(@Context Player player, @Arg int limit) {
-        List<PlayerStats> leaderboard = databaseManager.getLeaderboard(limit);
+    void top(@Context Player player) {
+        List<PlayerStats> leaderboard = databaseManager.getLeaderboard(10);
         player.sendMessage("Top Duelists:");
         leaderboard.forEach(stats -> player.sendMessage(stats.uuid() + ": Wins=" + stats.duelWon() + " Losses=" + stats.duelLost()));
     }

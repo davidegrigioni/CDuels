@@ -1,5 +1,6 @@
 package cc.davyy.cduels.managers;
 
+import cc.davyy.cduels.utils.Messages;
 import com.google.inject.Singleton;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Objects;
 
 import static cc.davyy.cduels.utils.ConfigUtils.getConfig;
+import static cc.davyy.cduels.utils.ConfigUtils.getMessage;
+import static cc.davyy.cduels.utils.TxtUtils.of;
 
 @Singleton
 public class RewardManager {
@@ -21,7 +24,9 @@ public class RewardManager {
                 .map(this::parseItemStack)
                 .forEach(itemStack -> player.getInventory().addItem(itemStack));
 
-        player.sendMessage("Congratulations! You've received your duel rewards.");
+        String duelReward = getMessage(Messages.DUEL_REWARD);
+        player.sendMessage(of(duelReward)
+                .build());
     }
 
     private ItemStack parseItemStack(@NotNull String itemString) {

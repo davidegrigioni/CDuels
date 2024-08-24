@@ -13,8 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static cc.davyy.cduels.utils.ColorUtils.colorize;
 import static cc.davyy.cduels.utils.ConfigUtils.getMessage;
+import static cc.davyy.cduels.utils.TxtUtils.of;
 
 @Singleton
 public class DuelManager {
@@ -43,8 +43,10 @@ public class DuelManager {
 
         if (duelWorld == null) {
             String dwFailed = getMessage(Messages.DUEL_WORLD_CREATION_FAILED);
-            player1.sendMessage(colorize(dwFailed));
-            player2.sendMessage(colorize(dwFailed));
+            player1.sendMessage(of(dwFailed)
+                    .build());
+            player2.sendMessage(of(dwFailed)
+                    .build());
             return;
         }
 
@@ -64,8 +66,10 @@ public class DuelManager {
         player2.teleportAsync(player2Spawn);
 
         String duelStarted = getMessage(Messages.DUEL_STARTED);
-        player1.sendMessage(colorize(duelStarted));
-        player2.sendMessage(colorize(duelStarted));
+        player1.sendMessage(of(duelStarted)
+                .build());
+        player2.sendMessage(of(duelStarted)
+                .build());
     }
 
     /**
@@ -82,10 +86,12 @@ public class DuelManager {
             String duelEnd = getMessage(Messages.DUEL_ENDED);
 
             player1.teleportAsync(player1OriginalLocation);
-            player1.sendMessage(colorize(duelEnd));
+            player1.sendMessage(of(duelEnd)
+                    .build());
 
             player2.teleportAsync(player2OriginalLocation);
-            player2.sendMessage(colorize(duelEnd));
+            player2.sendMessage(of(duelEnd)
+                    .build());
         }
 
         ItemStack[] player1OriginalInventory = playerOriginalInventories.remove(player1.getUniqueId());
