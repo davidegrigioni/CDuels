@@ -36,7 +36,7 @@ public class DatabaseManager {
         }
     }
 
-    public void updateStats(@NotNull UUID uuid, int duelWon, int duelLost) {
+    protected void updateStats(@NotNull UUID uuid, int duelWon, int duelLost) {
         table.insertInto("uuid", "duels_won", "duels_lost")
                 .withParameter(uuid.toString())
                 .withParameter(duelWon)
