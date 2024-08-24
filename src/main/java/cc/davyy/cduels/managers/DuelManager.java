@@ -1,5 +1,6 @@
 package cc.davyy.cduels.managers;
 
+import cc.davyy.cduels.model.PlayerStats;
 import cc.davyy.cduels.utils.Messages;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -24,10 +25,14 @@ public class DuelManager {
     private final Map<UUID, ItemStack[]> playerOriginalInventories = new HashMap<>();
 
     private final WorldCreatorManager worldCreatorManager;
+    private final DatabaseManager databaseManager;
+    private final RewardManager rewardManager;
 
     @Inject
-    public DuelManager(WorldCreatorManager worldCreatorManager) {
+    public DuelManager(WorldCreatorManager worldCreatorManager, DatabaseManager databaseManager, RewardManager rewardManager) {
         this.worldCreatorManager = worldCreatorManager;
+        this.databaseManager = databaseManager;
+        this.rewardManager = rewardManager;
     }
 
     /**
@@ -37,71 +42,43 @@ public class DuelManager {
      * @param player2 The second player.
      */
     public void startDuel(@NotNull Player player1, @NotNull Player player2) {
-        String worldName = "duel_" + UUID.randomUUID().toString().substring(0, 8);
-
-        World duelWorld = worldCreatorManager.createDuelWorld(worldName);
+        World duelWorld = createDuelWorld();
 
         if (duelWorld == null) {
-            String dwFailed = getMessage(Messages.DUEL_WORLD_CREATION_FAILED);
-            player1.sendMessage(of(dwFailed)
-                    .build());
-            player2.sendMessage(of(dwFailed)
-                    .build());
+            sendDuelMessage(player1, Messages.DUEL_WORLD_CREATION_FAILED);
+            sendDuelMessage(player2, Messages.DUEL_WORLD_CREATION_FAILED);
             return;
         }
 
-        playerOriginalLocations.put(player1.getUniqueId(), player1.getLocation());
-        playerOriginalLocations.put(player2.getUniqueId(), player2.getLocation());
+        savePlayerState(player1);
+        savePlayerState(player2);
 
-        playerOriginalInventories.put(player1.getUniqueId(), player1.getInventory().getContents());
-        playerOriginalInventories.put(player2.getUniqueId(), player2.getInventory().getContents());
+        clearPlayerInventory(player1);
+        clearPlayerInventory(player2);
 
-        player1.getInventory().clear();
-        player2.getInventory().clear();
+        teleportToDuelWorld(player1, duelWorld, 100, 100);
+        teleportToDuelWorld(player2, duelWorld, -100, -100);
 
-        Location player1Spawn = new Location(duelWorld, 100, 1, 100);
-        Location player2Spawn = new Location(duelWorld, -100, 1, -100);
-
-        player1.teleportAsync(player1Spawn);
-        player2.teleportAsync(player2Spawn);
-
-        String duelStarted = getMessage(Messages.DUEL_STARTED);
-        player1.sendMessage(of(duelStarted)
-                .build());
-        player2.sendMessage(of(duelStarted)
-                .build());
+        sendDuelMessage(player1, Messages.DUEL_STARTED);
+        sendDuelMessage(player2, Messages.DUEL_STARTED);
     }
 
     /**
      * Ends a duel by teleporting players back to their original locations, restoring inventories, and deleting the duel world.
      *
-     * @param player1 The first player.
-     * @param player2 The second player.
+     * @param winner The first player.
+     * @param loser The second player.
      */
-    public void endDuel(@NotNull Player player1, @NotNull Player player2) {
-        Location player1OriginalLocation = playerOriginalLocations.remove(player1.getUniqueId());
-        Location player2OriginalLocation = playerOriginalLocations.remove(player2.getUniqueId());
+    public void endDuel(@NotNull Player winner, @NotNull Player loser) {
+        World duelWorld = winner.getWorld();
+        applyDuelStatsIfDuelWorld(duelWorld, winner.getUniqueId(), loser.getUniqueId());
 
-        if (player1OriginalLocation != null && player2OriginalLocation != null) {
-            String duelEnd = getMessage(Messages.DUEL_ENDED);
+        restorePlayerState(winner);
+        restorePlayerState(loser);
 
-            player1.teleportAsync(player1OriginalLocation);
-            player1.sendMessage(of(duelEnd)
-                    .build());
-
-            player2.teleportAsync(player2OriginalLocation);
-            player2.sendMessage(of(duelEnd)
-                    .build());
-        }
-
-        ItemStack[] player1OriginalInventory = playerOriginalInventories.remove(player1.getUniqueId());
-        ItemStack[] player2OriginalInventory = playerOriginalInventories.remove(player2.getUniqueId());
-
-        if (player1OriginalInventory != null && player2OriginalInventory != null) {
-            player1.getInventory().setContents(player1OriginalInventory);
-
-            player2.getInventory().setContents(player2OriginalInventory);
-        }
+        winner.sendMessage("Congratulations! You won the duel.");
+        rewardManager.applyRewardToPlayer(winner);
+        loser.sendMessage("You lost the duel. Better luck next time.");
     }
 
     /**
@@ -139,8 +116,52 @@ public class DuelManager {
      *
      * @param challenged The player whose request should be removed.
      */
-    public void removeDuelRequest(UUID challenged) {
+    public void removeDuelRequest(@NotNull UUID challenged) {
         duelRequests.remove(challenged);
     }
+
+    private void restorePlayerState(@NotNull Player player) {
+        player.teleportAsync(playerOriginalLocations.get(player.getUniqueId()));
+        player.getInventory().setContents(playerOriginalInventories.get(player.getUniqueId()));
+    }
+
+    private void applyDuelStatsIfDuelWorld(@NotNull World world, @NotNull UUID winnerUUID, @NotNull UUID loserUUID) {
+        if (isDuelWorld(world)) {
+            PlayerStats winnerStats = databaseManager.getPlayerStats(winnerUUID);
+            PlayerStats loserStats = databaseManager.getPlayerStats(loserUUID);
+
+            databaseManager.updateStats(winnerUUID, winnerStats.duelWon() + 1, winnerStats.duelLost());
+            databaseManager.updateStats(loserUUID, loserStats.duelWon(), loserStats.duelLost() + 1);
+
+            worldCreatorManager.deleteWorld(world.getName());
+        }
+    }
+
+    private World createDuelWorld() {
+        String worldName = "duel_" + UUID.randomUUID().toString().substring(0, 8);
+        return worldCreatorManager.createDuelWorld(worldName);
+    }
+
+    private void savePlayerState(@NotNull Player player) {
+        playerOriginalLocations.put(player.getUniqueId(), player.getLocation());
+        playerOriginalInventories.put(player.getUniqueId(), player.getInventory().getContents());
+    }
+
+    private void clearPlayerInventory(@NotNull Player player) {
+        player.getInventory().clear();
+    }
+
+    private void teleportToDuelWorld(@NotNull Player player, @NotNull World duelWorld, double x, double z) {
+        Location spawnLocation = new Location(duelWorld, x, 1, z);
+        player.teleportAsync(spawnLocation);
+    }
+
+    private void sendDuelMessage(@NotNull Player player, @NotNull Messages messageKey) {
+        String message = getMessage(messageKey);
+        player.sendMessage(of(message)
+                .build());
+    }
+
+    private boolean isDuelWorld(@NotNull World world) { return world.getName().startsWith("duel_"); }
 
 }
