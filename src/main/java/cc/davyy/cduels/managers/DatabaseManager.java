@@ -9,9 +9,11 @@ import io.github.pigaut.lib.sql.Database;
 import io.github.pigaut.lib.sql.SQLib;
 import org.jetbrains.annotations.NotNull;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -28,52 +30,62 @@ public class DatabaseManager {
         instance.getServer().getScheduler().runTaskAsynchronously(instance, this::createTable);
     }
 
-    public void addPlayer(@NotNull UUID uuid) {
-        if (!playerExists(uuid)) {
-            table.insertInto("uuid")
-                    .withParameter(uuid.toString())
-                    .executeUpdate();
-        }
+    public CompletableFuture<Void> addPlayer(@NotNull UUID uuid) {
+        return CompletableFuture.runAsync(() -> {
+            if (!playerExists(uuid)) {
+                table.insertInto("uuid")
+                        .withParameter(uuid.toString())
+                        .executeUpdate();
+            }
+        });
     }
 
-    protected void updateStats(@NotNull UUID uuid, int duelWon, int duelLost) {
-        table.insertInto("uuid", "duels_won", "duels_lost")
+    public CompletableFuture<Void> updateStats(@NotNull UUID uuid, int duelWon, int duelLost) {
+        return CompletableFuture.runAsync(() -> table.insertInto("uuid", "duels_won", "duels_lost")
                 .withParameter(uuid.toString())
                 .withParameter(duelWon)
                 .withParameter(duelLost)
-                .executeUpdate();
+                .executeUpdate());
     }
 
-    public List<PlayerStats> getLeaderboard(int limit) {
-        List<PlayerStats> statsList = new ArrayList<>();
-        table.select("ORDER BY duels_won DESC LIMIT ?")
-                .withParameter(limit)
-                .executeQuery(resultSet -> {
-                    while (resultSet.next()) {
-                        UUID uuid = UUID.fromString(resultSet.getString("uuid"));
-                        int duelsWon = resultSet.getInt("duels_won");
-                        int duelsLost = resultSet.getInt("duels_lost");
-                        statsList.add(new PlayerStats(uuid, duelsWon, duelsLost));
-                    }
-                });
-        return statsList;
+    public CompletableFuture<List<PlayerStats>> getLeaderboard(int limit) {
+        return CompletableFuture.supplyAsync(() -> {
+            List<PlayerStats> statsList = new ArrayList<>();
+            table.select("ORDER BY duels_won DESC LIMIT ?")
+                    .withParameter(limit)
+                    .executeQuery(resultSet -> {
+                        try {
+                            while (resultSet.next()) {
+                                UUID uuid = UUID.fromString(resultSet.getString("uuid"));
+                                int duelsWon = resultSet.getInt("duels_won");
+                                int duelsLost = resultSet.getInt("duels_lost");
+                                statsList.add(new PlayerStats(uuid, duelsWon, duelsLost));
+                            }
+                        } catch (SQLException e) {
+                            throw new RuntimeException("Failed to retrieve leaderboard", e);
+                        }
+                    });
+            return statsList;
+        });
     }
 
-    public PlayerStats getPlayerStats(@NotNull UUID uuid) {
-        AtomicReference<PlayerStats> playerStats = new AtomicReference<>();
-        table.select("WHERE uuid = ?")
-                .withParameter(uuid.toString())
-                .executeQuery(resultSet -> {
-                    if (resultSet.next()) {
-                        int duelsWon = resultSet.getInt("duels_won");
-                        int duelsLost = resultSet.getInt("duels_lost");
+    public CompletableFuture<PlayerStats> getPlayerStats(@NotNull UUID uuid) {
+        return CompletableFuture.supplyAsync(() -> {
+            AtomicReference<PlayerStats> playerStats = new AtomicReference<>();
+            table.select("WHERE uuid = ?")
+                    .withParameter(uuid.toString())
+                    .executeQuery(resultSet -> {
+                        if (resultSet.next()) {
+                            int duelsWon = resultSet.getInt("duels_won");
+                            int duelsLost = resultSet.getInt("duels_lost");
 
-                        PlayerStats stats = new PlayerStats(uuid, duelsWon, duelsLost);
+                            PlayerStats stats = new PlayerStats(uuid, duelsWon, duelsLost);
 
-                        playerStats.set(stats);
-                    }
-                });
-        return playerStats.get();
+                            playerStats.set(stats);
+                        }
+                    });
+            return playerStats.get();
+        });
     }
 
     private void createTable() {

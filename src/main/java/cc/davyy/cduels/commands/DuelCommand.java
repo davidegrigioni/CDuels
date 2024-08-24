@@ -1,7 +1,6 @@
 package cc.davyy.cduels.commands;
 
 import cc.davyy.cduels.CDuels;
-import cc.davyy.cduels.managers.DatabaseManager;
 import cc.davyy.cduels.managers.DuelManager;
 import cc.davyy.cduels.model.PlayerStats;
 import cc.davyy.cduels.utils.Messages;
@@ -13,6 +12,7 @@ import dev.rollczi.litecommands.annotations.execute.Execute;
 import org.bukkit.entity.Player;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static cc.davyy.cduels.utils.ConfigUtils.getMessage;
 import static cc.davyy.cduels.utils.TxtUtils.of;
@@ -80,9 +80,16 @@ public class DuelCommand {
 
     @Execute(name = "top")
     void top(@Context Player player) {
-        List<PlayerStats> leaderboard = duelManager.getLeaderBoard(10);
+        CompletableFuture<List<PlayerStats>> leaderboardFuture = duelManager.getLeaderBoard(10);
+
         player.sendMessage("Top Duelists:");
-        leaderboard.forEach(stats -> player.sendMessage(stats.uuid() + ": Wins=" + stats.duelWon() + " Losses=" + stats.duelLost()));
+
+        leaderboardFuture.thenAccept(leaderboard -> leaderboard.forEach(stats ->
+                player.sendMessage(stats.uuid() + ": Wins=" + stats.duelWon() + " Losses=" + stats.duelLost()))).exceptionally(ex -> {
+            player.sendMessage("Failed to retrieve leaderboard: " + ex.getMessage());
+            return null;
+        });
     }
+
 
 }

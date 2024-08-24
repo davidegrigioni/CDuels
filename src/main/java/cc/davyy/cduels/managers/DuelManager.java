@@ -4,6 +4,7 @@ import cc.davyy.cduels.model.PlayerStats;
 import cc.davyy.cduels.utils.Messages;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static cc.davyy.cduels.utils.ConfigUtils.getMessage;
 import static cc.davyy.cduels.utils.TxtUtils.of;
@@ -28,6 +30,8 @@ public class DuelManager {
     private final WorldCreatorManager worldCreatorManager;
     private final DatabaseManager databaseManager;
     private final RewardManager rewardManager;
+
+    private final ComponentLogger componentLogger = ComponentLogger.logger(DuelManager.class);
 
     @Inject
     public DuelManager(WorldCreatorManager worldCreatorManager, DatabaseManager databaseManager, RewardManager rewardManager) {
@@ -119,7 +123,7 @@ public class DuelManager {
         duelRequests.remove(challenged);
     }
 
-    public List<PlayerStats> getLeaderBoard(int limit) { return databaseManager.getLeaderboard(limit); }
+    public CompletableFuture<List<PlayerStats>> getLeaderBoard(int limit) { return databaseManager.getLeaderboard(limit); }
 
     private void restorePlayerState(@NotNull Player player) {
         player.teleportAsync(playerOriginalLocations.get(player.getUniqueId()));
@@ -128,13 +132,20 @@ public class DuelManager {
 
     private void applyDuelStatsIfDuelWorld(@NotNull World world, @NotNull UUID winnerUUID, @NotNull UUID loserUUID) {
         if (isDuelWorld(world)) {
-            PlayerStats winnerStats = databaseManager.getPlayerStats(winnerUUID);
-            PlayerStats loserStats = databaseManager.getPlayerStats(loserUUID);
+            CompletableFuture<PlayerStats> winnerStatsFuture = databaseManager.getPlayerStats(winnerUUID);
+            CompletableFuture<PlayerStats> loserStatsFuture = databaseManager.getPlayerStats(loserUUID);
 
-            databaseManager.updateStats(winnerUUID, winnerStats.duelWon() + 1, winnerStats.duelLost());
-            databaseManager.updateStats(loserUUID, loserStats.duelWon(), loserStats.duelLost() + 1);
+            CompletableFuture<Void> updateStatsFuture = winnerStatsFuture.thenCombine(loserStatsFuture, (winnerStats, loserStats) -> {
+                databaseManager.updateStats(winnerUUID, winnerStats.duelWon() + 1, winnerStats.duelLost());
+                databaseManager.updateStats(loserUUID, loserStats.duelWon(), loserStats.duelLost() + 1);
+                return null;
+            });
 
-            worldCreatorManager.deleteWorld(world.getName());
+            updateStatsFuture.thenRun(() -> worldCreatorManager.deleteWorld(world.getName()))
+                    .exceptionally(ex -> {
+                        componentLogger.error("Failed to update duel stats or delete the world: {}", ex.getMessage());
+                        return null;
+                    });
         }
     }
 
