@@ -9,12 +9,15 @@ import dev.rollczi.litecommands.annotations.argument.Arg;
 import dev.rollczi.litecommands.annotations.command.Command;
 import dev.rollczi.litecommands.annotations.context.Context;
 import dev.rollczi.litecommands.annotations.execute.Execute;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static cc.davyy.cduels.utils.ConfigUtils.getMessage;
 import static cc.davyy.cduels.utils.TxtUtils.of;
 
 @Command(name = "duel")
@@ -32,26 +35,21 @@ public class DuelCommand {
     @Execute(name = "invite")
     void inviteDuel(@Context Player player, @Arg Player target) {
         if (!target.isOnline()) {
-            String playerNotOnline = getMessage(Messages.PLAYER_NOT_ONLINE);
-            player.sendMessage(of(playerNotOnline)
-                    .build());
+            player.sendMessage(Messages.PLAYER_NOT_ONLINE.getMessage());
             return;
         }
 
         if (player.equals(target)) {
-            String duelYourself = getMessage(Messages.DUEL_YOURSELF);
-            player.sendMessage(of(duelYourself)
-                    .build());
+            player.sendMessage(Messages.DUEL_YOURSELF.getMessage());
             return;
         }
 
         duelManager.sendDuelRequest(player.getUniqueId(), target.getUniqueId());
-        String duelInviteSend = getMessage(Messages.DUEL_INVITE_SEND);
-        String duelReceived = getMessage(Messages.DUEL_INVITE_RECEIVED);
-        player.sendMessage(of(duelInviteSend)
+
+        player.sendMessage(of(Messages.DUEL_INVITE_SEND.getStringMessage())
                 .placeholder("target", target.getName())
                 .build());
-        target.sendMessage(of(duelReceived)
+        target.sendMessage(of(Messages.DUEL_INVITE_RECEIVED.getStringMessage())
                 .placeholder("player", player.getName())
                 .build());
     }
@@ -59,37 +57,64 @@ public class DuelCommand {
     @Execute(name = "accept")
     void acceptDuel(@Context Player player) {
         if (!duelManager.hasDuelRequest(player.getUniqueId())) {
-            player.sendMessage("You have no pending duel requests.");
+            player.sendMessage(Messages.DUEL_NO_PENDING_REQUEST.getMessage());
             return;
         }
 
         Player challenger = instance.getServer().getPlayer(duelManager.getChallenger(player.getUniqueId()));
         if (challenger == null || !challenger.isOnline()) {
-            player.sendMessage("The player who challenged you is no longer online.");
+            player.sendMessage(Messages.PLAYER_NO_LONGER_ONLINE.getMessage());
             duelManager.removeDuelRequest(player.getUniqueId());
             return;
         }
 
         duelManager.startDuel(challenger, player);
-
         duelManager.removeDuelRequest(player.getUniqueId());
 
-        player.sendMessage("You have accepted the duel challenge from " + challenger.getName() + "!");
-        challenger.sendMessage(player.getName() + " has accepted your duel challenge!");
+        player.sendMessage(of(Messages.DUEL_CHALLENGE_ACCEPTED.getStringMessage())
+                .placeholder("challenger", challenger.getName())
+                .build());
+        challenger.sendMessage(of(Messages.DUEL_ACCEPTED.getStringMessage())
+                .placeholder("player", player.getName())
+                .build());
     }
 
     @Execute(name = "top")
     void top(@Context Player player) {
         CompletableFuture<List<PlayerStats>> leaderboardFuture = duelManager.getLeaderBoard(10);
 
-        player.sendMessage("Top Duelists:");
+        player.sendMessage(Component.text("Top Duelists:")
+                .color(NamedTextColor.GOLD)
+                .decoration(TextDecoration.BOLD, true));
 
-        leaderboardFuture.thenAccept(leaderboard -> leaderboard.forEach(stats ->
-                player.sendMessage(stats.uuid() + ": Wins=" + stats.duelWon() + " Losses=" + stats.duelLost()))).exceptionally(ex -> {
-            player.sendMessage("Failed to retrieve leaderboard: " + ex.getMessage());
+        leaderboardFuture.thenAccept(leaderboard -> {
+            for (PlayerStats stats : leaderboard) {
+                String playerName = Bukkit.getOfflinePlayer(stats.uuid()).getName();
+                int wins = stats.duelWon();
+                int losses = stats.duelLost();
+
+                Component message = Component.text()
+                        .append(Component.text("[")
+                                .color(NamedTextColor.GRAY))
+                        .append(Component.text(wins)
+                                .color(NamedTextColor.YELLOW))
+                        .append(Component.text("-")
+                                .color(NamedTextColor.GRAY))
+                        .append(Component.text(losses)
+                                .color(NamedTextColor.RED))
+                        .append(Component.text("] ")
+                                .color(NamedTextColor.GRAY))
+                        .append(Component.text(playerName)
+                                .color(NamedTextColor.AQUA))
+                        .build();
+
+                player.sendMessage(message);
+            }
+        }).exceptionally(ex -> {
+            player.sendMessage(Component.text("Failed to retrieve leaderboard: " + ex.getMessage())
+                    .color(NamedTextColor.RED));
             return null;
         });
     }
-
 
 }
