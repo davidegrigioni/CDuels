@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static cc.davyy.cduels.utils.ConfigUtils.getConfig;
-import static cc.davyy.cduels.utils.ConfigUtils.getMessage;
-import static cc.davyy.cduels.utils.TxtUtils.of;
 
 @Singleton
 public class RewardManager {
@@ -24,9 +22,7 @@ public class RewardManager {
                 .map(this::parseItemStack)
                 .forEach(itemStack -> player.getInventory().addItem(itemStack));
 
-        String duelReward = getMessage(Messages.DUEL_REWARD);
-        player.sendMessage(of(duelReward)
-                .build());
+        player.sendMessage(Messages.DUEL_REWARD.getMessage());
     }
 
     private ItemStack parseItemStack(@NotNull String itemString) {
