@@ -1,12 +1,17 @@
 messages:
   duel-started: "<green>Duel started! You have been teleported to the duel world.</green>"
-  duel-end: "<green>Duel ended! You have been teleported back to your original location.</green>"
   duel-reward: "<green>Congratulations! You've received your duel rewards.</green>"
   duel-invite-send: "<green>You have invited <target> to a duel.</green>"
   duel-invite-received: "<green><player> has invited you to a duel! Use /duel accept to accept.</green>"
+  duel-won: "<green>Congratulations! You won the duel.</green>"
+  duel-challenge-accepted: "<green>You have accepted the duel challenge from <challenger>!</green>"
+  duel-accepted: "<green><player> has accepted your duel challenge!</green>"
 
   kit-received: "<green>You have received the <kitname> kit!</green>"
 
+  duel-lost: "<red>You lost the duel. Better luck next time.</red>"
+  player-no-longer-online: "<red>The player who challenged you is no longer online.</red>"
+  duel-no-pending: "<red>You have no pending duel requests.</red>"
   dw-creation-failed: "<red>Failed to create the duel world.</red>"
   no-permission: "<red>You do not have permission to use this kit!</red>"
   kit-not-found: "<red>Kit not found!</red>"
