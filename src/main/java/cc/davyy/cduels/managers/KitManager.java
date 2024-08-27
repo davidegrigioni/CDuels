@@ -16,7 +16,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import static cc.davyy.cduels.utils.ConfigUtils.getConfig;
-import static cc.davyy.cduels.utils.ConfigUtils.getMessage;
 import static cc.davyy.cduels.utils.TxtUtils.of;
 
 @Singleton
@@ -63,24 +62,17 @@ public class KitManager {
         kitOptional.ifPresentOrElse(
                 kit -> {
                     if (!player.hasPermission(kit.permission())) {
-                        String noPerm = getMessage(Messages.NO_PERMISSION);
-                        player.sendMessage(of(noPerm)
-                                .build());
+                        player.sendMessage(Messages.NO_PERMISSION.getMessage());
                         return;
                     }
 
                     player.getInventory().clear();
                     kit.items().forEach(item -> player.getInventory().addItem(item));
-                    String kitReceived = getMessage(Messages.KIT_RECEIVED);
-                    player.sendMessage(of(kitReceived)
+                    player.sendMessage(of(Messages.KIT_RECEIVED.getStringMessage())
                             .placeholder("kitname", kit.name())
                             .build());
                 },
-                () -> {
-                    String kitNotFound = getMessage(Messages.KIT_NOT_FOUND);
-                    player.sendMessage(of(kitNotFound)
-                            .build());
-                }
+                () -> player.sendMessage(Messages.KIT_NOT_FOUND.getMessage())
         );
     }
 
@@ -89,7 +81,5 @@ public class KitManager {
                 .filter(kit -> kit.name().equalsIgnoreCase(name))
                 .findFirst();
     }
-
-    public List<Kit> getKits() { return kits; }
 
 }
