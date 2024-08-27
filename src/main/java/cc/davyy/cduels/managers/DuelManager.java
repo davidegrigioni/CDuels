@@ -1,10 +1,11 @@
 package cc.davyy.cduels.managers;
 
+import cc.davyy.cduels.CDuels;
 import cc.davyy.cduels.model.PlayerStats;
 import cc.davyy.cduels.utils.Messages;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -17,11 +18,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import static cc.davyy.cduels.utils.ConfigUtils.getMessage;
-import static cc.davyy.cduels.utils.TxtUtils.of;
-
 @Singleton
 public class DuelManager {
+
+    private final CDuels instance;
 
     private final Map<UUID, UUID> duelRequests = new HashMap<>();
     private final Map<UUID, Location> playerOriginalLocations = new HashMap<>();
@@ -31,10 +31,9 @@ public class DuelManager {
     private final DatabaseManager databaseManager;
     private final RewardManager rewardManager;
 
-    private final ComponentLogger componentLogger = ComponentLogger.logger(DuelManager.class);
-
     @Inject
-    public DuelManager(WorldCreatorManager worldCreatorManager, DatabaseManager databaseManager, RewardManager rewardManager) {
+    public DuelManager(CDuels instance, WorldCreatorManager worldCreatorManager, DatabaseManager databaseManager, RewardManager rewardManager) {
+        this.instance = instance;
         this.worldCreatorManager = worldCreatorManager;
         this.databaseManager = databaseManager;
         this.rewardManager = rewardManager;
@@ -50,8 +49,8 @@ public class DuelManager {
         World duelWorld = createDuelWorld();
 
         if (duelWorld == null) {
-            sendDuelMessage(player1, Messages.DUEL_WORLD_CREATION_FAILED);
-            sendDuelMessage(player2, Messages.DUEL_WORLD_CREATION_FAILED);
+            player1.sendMessage(Messages.DUEL_WORLD_CREATION_FAILED.getMessage());
+            player2.sendMessage(Messages.DUEL_WORLD_CREATION_FAILED.getMessage());
             return;
         }
 
@@ -64,8 +63,8 @@ public class DuelManager {
         teleportToDuelWorld(player1, duelWorld, 100, 100);
         teleportToDuelWorld(player2, duelWorld, -100, -100);
 
-        sendDuelMessage(player1, Messages.DUEL_STARTED);
-        sendDuelMessage(player2, Messages.DUEL_STARTED);
+        player1.sendMessage(Messages.DUEL_STARTED.getMessage());
+        player2.sendMessage(Messages.DUEL_STARTED.getMessage());
     }
 
     /**
@@ -76,14 +75,16 @@ public class DuelManager {
      */
     public void endDuel(@NotNull Player winner, @NotNull Player loser) {
         World duelWorld = winner.getWorld();
+
         applyDuelStatsIfDuelWorld(duelWorld, winner.getUniqueId(), loser.getUniqueId());
 
         restorePlayerState(winner);
         restorePlayerState(loser);
 
-        winner.sendMessage("Congratulations! You won the duel.");
+        winner.sendMessage(Messages.DUEL_WON.getMessage());
         rewardManager.applyRewardToPlayer(winner);
-        loser.sendMessage("You lost the duel. Better luck next time.");
+
+        loser.sendMessage(Messages.DUEL_LOST.getMessage());
     }
 
     /**
@@ -135,17 +136,13 @@ public class DuelManager {
             CompletableFuture<PlayerStats> winnerStatsFuture = databaseManager.getPlayerStats(winnerUUID);
             CompletableFuture<PlayerStats> loserStatsFuture = databaseManager.getPlayerStats(loserUUID);
 
-            CompletableFuture<Void> updateStatsFuture = winnerStatsFuture.thenCombine(loserStatsFuture, (winnerStats, loserStats) -> {
+            Bukkit.getScheduler().runTaskAsynchronously(instance, () -> winnerStatsFuture.thenCombine(loserStatsFuture, (winnerStats, loserStats) -> {
                 databaseManager.updateStats(winnerUUID, winnerStats.duelWon() + 1, winnerStats.duelLost());
                 databaseManager.updateStats(loserUUID, loserStats.duelWon(), loserStats.duelLost() + 1);
                 return null;
-            });
+            }));
 
-            updateStatsFuture.thenRun(() -> worldCreatorManager.deleteWorld(world.getName()))
-                    .exceptionally(ex -> {
-                        componentLogger.error("Failed to update duel stats or delete the world: {}", ex.getMessage());
-                        return null;
-                    });
+            worldCreatorManager.deleteWorld(world.getName());
         }
     }
 
@@ -162,12 +159,6 @@ public class DuelManager {
     private void teleportToDuelWorld(@NotNull Player player, @NotNull World duelWorld, double x, double z) {
         Location spawnLocation = new Location(duelWorld, x, 1, z);
         player.teleportAsync(spawnLocation);
-    }
-
-    private void sendDuelMessage(@NotNull Player player, @NotNull Messages messageKey) {
-        String message = getMessage(messageKey);
-        player.sendMessage(of(message)
-                .build());
     }
 
     private boolean isDuelWorld(@NotNull World world) { return world.getName().startsWith("duel_"); }
