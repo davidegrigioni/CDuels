@@ -26,6 +26,4 @@ public final class ConfigUtils {
 
     public static Yaml getConfig() { return config; }
 
-    public static String getMessage(Messages path) { return messages.getString(path.getMessage()); }
-
 }
