@@ -1,5 +1,7 @@
 package cc.davyy.cduels.managers;
 
+import cc.davyy.cduels.CDuels;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.*;
@@ -13,7 +15,14 @@ import java.util.Arrays;
 @Singleton
 public class WorldCreatorManager {
 
+    private final CDuels instance;
+
     private final ComponentLogger componentLogger = ComponentLogger.logger(WorldCreatorManager.class);
+
+    @Inject
+    public WorldCreatorManager(CDuels instance) {
+        this.instance = instance;
+    }
 
     /**
      * Creates a new world for duels with specific properties.
@@ -66,8 +75,15 @@ public class WorldCreatorManager {
             return;
         }
 
-        Bukkit.unloadWorld(world, false);
-        deleteWorldFiles(worldName);
+        Bukkit.getScheduler().runTask(instance, () -> {
+            if (!Bukkit.unloadWorld(world, false)) {
+                componentLogger.error("Failed to unload world '{}'.", worldName);
+                return;
+            }
+
+            componentLogger.info("World '{}' unloaded successfully.", worldName);
+            Bukkit.getScheduler().runTaskAsynchronously(instance, () -> deleteWorldFiles(worldName));
+        });
     }
 
     /**
