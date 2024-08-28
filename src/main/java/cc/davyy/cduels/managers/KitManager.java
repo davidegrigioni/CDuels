@@ -76,10 +76,25 @@ public class KitManager {
         );
     }
 
+    public void assignKit(@NotNull Player player, @NotNull Kit kit) {
+        if (!player.hasPermission(kit.permission())) {
+            player.sendMessage(Messages.NO_PERMISSION.getMessage());
+            return;
+        }
+
+        player.getInventory().clear();
+        kit.items().forEach(item -> player.getInventory().addItem(item));
+        player.sendMessage(of(Messages.KIT_RECEIVED.getStringMessage())
+                .placeholder("kitname", kit.name())
+                .build());
+    }
+
     public Optional<Kit> getKitByName(@NotNull String name) {
         return kits.stream()
                 .filter(kit -> kit.name().equalsIgnoreCase(name))
                 .findFirst();
     }
+
+    public List<Kit> getKits() { return new ArrayList<>(kits); }
 
 }

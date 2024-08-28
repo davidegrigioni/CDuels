@@ -3,6 +3,7 @@ package cc.davyy.cduels;
 import cc.davyy.cduels.commands.DuelCommand;
 import cc.davyy.cduels.commands.KitCommand;
 import cc.davyy.cduels.listeners.DeathListener;
+import cc.davyy.cduels.listeners.GuiListener;
 import cc.davyy.cduels.listeners.PlayerJoinListener;
 import cc.davyy.cduels.managers.*;
 import cc.davyy.cduels.module.CModule;
@@ -33,6 +34,7 @@ public class CDuels extends JavaPlugin {
         injectGuice();
 
         registerListeners(
+                new GuiListener(kitManager),
                 new PlayerJoinListener(databaseManager),
                 new DeathListener(duelManager));
         registerCommands();
