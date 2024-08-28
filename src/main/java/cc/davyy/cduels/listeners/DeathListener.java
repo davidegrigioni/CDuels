@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.jetbrains.annotations.NotNull;
 
 public class DeathListener implements Listener {
 
@@ -17,7 +18,7 @@ public class DeathListener implements Listener {
     }
 
     @EventHandler
-    public void onDeath(PlayerDeathEvent event) {
+    public void onDeath(@NotNull PlayerDeathEvent event) {
         Player winner = event.getPlayer();
         Player loser = event.getEntity();
         duelManager.endDuel(winner, loser);

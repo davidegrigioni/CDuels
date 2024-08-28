@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
+import org.jetbrains.annotations.NotNull;
 
 public class GuiListener implements Listener {
 
@@ -20,7 +21,7 @@ public class GuiListener implements Listener {
     }
 
     @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
+    public void onInventoryClick(@NotNull InventoryClickEvent event) {
         Inventory inventory = event.getInventory();
         if (inventory.getHolder() instanceof KitSelectionGUI) {
             event.setCancelled(true);

@@ -14,6 +14,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -55,7 +56,7 @@ public class DuelCommand {
     }
 
     @Execute(name = "accept")
-    void acceptDuel(@Context Player player) {
+    void acceptDuel(@Context @NotNull Player player) {
         if (!duelManager.hasDuelRequest(player.getUniqueId())) {
             player.sendMessage(Messages.DUEL_NO_PENDING_REQUEST.getMessage());
             return;
@@ -80,7 +81,7 @@ public class DuelCommand {
     }
 
     @Execute(name = "top")
-    void top(@Context Player player) {
+    void top(@Context @NotNull Player player) {
         CompletableFuture<List<PlayerStats>> leaderboardFuture = duelManager.getLeaderBoard(10);
 
         player.sendMessage(Component.text("Top Duelists:")

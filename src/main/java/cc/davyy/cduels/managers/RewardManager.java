@@ -25,7 +25,7 @@ public class RewardManager {
         player.sendMessage(Messages.DUEL_REWARD.getMessage());
     }
 
-    private ItemStack parseItemStack(@NotNull String itemString) {
+    private @NotNull ItemStack parseItemStack(@NotNull String itemString) {
         String[] parts = itemString.split(" ");
         Material material = Material.getMaterial(parts[0]);
         int amount = Integer.parseInt(parts[1]);

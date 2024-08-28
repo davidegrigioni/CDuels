@@ -23,7 +23,7 @@ public class DatabaseManager {
     private final DataTable table;
 
     @Inject
-    public DatabaseManager(CDuels instance) {
+    public DatabaseManager(@NotNull CDuels instance) {
         Database database = SQLib.createDatabase(instance.getDataFolder(), "database");
         this.table = database.tableOf("player_stats");
 

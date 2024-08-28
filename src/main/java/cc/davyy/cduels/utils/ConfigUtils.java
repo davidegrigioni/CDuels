@@ -26,4 +26,6 @@ public final class ConfigUtils {
 
     public static Yaml getConfig() { return config; }
 
+    public static Yaml getMessages() { return messages; }
+
 }

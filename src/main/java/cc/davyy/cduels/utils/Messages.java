@@ -5,7 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.jetbrains.annotations.NotNull;
 
-import static cc.davyy.cduels.utils.ConfigUtils.getConfig;
+import static cc.davyy.cduels.utils.ConfigUtils.getMessages;
 
 public enum Messages {
 
@@ -27,7 +27,7 @@ public enum Messages {
     DUEL_WORLD_CREATION_FAILED("messages.dw-creation-failed");
 
     private final String message;
-    private final static Yaml config = getConfig();
+    private static final Yaml messages = getMessages();
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
     Messages(String message) {
@@ -38,7 +38,7 @@ public enum Messages {
 
     public @NotNull Component getMessage() {
         return MM
-                .deserialize(config.get(message, message));
+                .deserialize(messages.getString(message));
     }
 
 }

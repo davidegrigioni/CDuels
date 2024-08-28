@@ -16,7 +16,7 @@ public class KitSelectionGUI implements InventoryHolder {
 
     private final Inventory inventory;
 
-    public KitSelectionGUI(List<Kit> kits) {
+    public KitSelectionGUI(@NotNull List<Kit> kits) {
         this.inventory = Bukkit.createInventory(this, 9, Component.text("Select Your Kit"));
 
         for (int i = 0; i < kits.size(); i++) {
